@@ -70,9 +70,8 @@ void	write_zone(t_zone* zone)
 	y = 0;
 	while (y < zone->height - 1)
 	{
-		write(1, zone->array, 1);
-		//write(1, zone->array + y * zone->width, zone->width);
-		//write(1, "\n", 1);
+		write(1, zone->array + y * zone->width, zone->width);
+		write(1, "\n", 1);
 		++y;
 	}
 	write(1, zone->array + y * zone->width, zone->width);
