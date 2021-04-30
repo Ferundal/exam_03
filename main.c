@@ -27,14 +27,42 @@ void set_value(int x, int y, t_zone* zone, char c)
 	*(zone->array + y * zone->width + x) = c;
 }
 
-float ft_abs(float value)
+void zone_init(t_zone* zone)
 {
-	if (value < 0)
-		return (-value);
-	return (value);
+	int	x;
+	int	y;
+
+	y = 0;
+	while (y < zone->height)
+	{
+		x = 0;
+		while (x < zone->width)
+		{
+			set_value(x, y, zone, zone->back_c);
+			++x;
+		}
+		++y;
+	}
 }
 
-void write_rect(t_zone* zone, t_rect* rect)
+int	is_rect(int x, int y, t_rect* rect)
+{
+	if (x >= rect->x && x <= rect->x + rect->width && y >= rect->y && y <= rect->y + rect->height)
+		return (1);
+	return (0);
+}
+
+int	is_border(int x, int y, t_rect* rect)
+{
+	if (((x >= rect->x && x <= rect->x + rect->width) && \
+	((y >= rect->y && y < rect->y + 1) || (y <= rect->y + rect->height && y > rect->y + rect->height - 1))) || \
+	(( y >= rect->y && y <= rect->y + rect->height) && \
+	((x >= rect->x && x < rect->x + 1) || (x <= rect->x + rect->width && x > rect->x + rect->width - 1))))
+		return (1);
+	return (0);
+}
+
+void put_rect(t_zone* zone, t_rect* rect)
 {
 	int		y;
 	int		x;
@@ -42,21 +70,14 @@ void write_rect(t_zone* zone, t_rect* rect)
 	y = 0;
 	while (y < zone->height)
 	{
+		x = 0;
 		while (x < zone->width)
 		{
-			x = 0;
-			set_value(x, y, zone, zone->back_c);
-			if(rect->rect_c == 'R')
-			{
-				if ((x > rect->x && x < rect->x + rect->width) && \
-					(y > rect->y && y < rect->y + rect->height))
-					set_value(x, y, zone, rect->rect_c);
-			}
-			if ((ft_abs(rect->x - x) < 1 && (y > rect->y && y < rect->y + rect->height)) || \
-				(ft_abs(rect->x + rect->width - x) < 1 && (y > rect->y && y < rect->y + rect->height)) || \
-				(ft_abs(rect->y - y) < 1 && (x > rect->x && x < rect->x + rect->width)) || \
-				(ft_abs(rect->y + rect->height - y) < 1 && (x > rect->x && x < rect->x + rect->width)))
+			if((rect->type == 'R') && (is_rect(x, y, rect) == 1))
 				set_value(x, y, zone, rect->rect_c);
+			else
+				if (is_border(x, y, rect) == 1)
+					set_value(x, y, zone, rect->rect_c);
 			++x;
 		}
 		++y;
@@ -105,6 +126,7 @@ int main(int argc, char** argv)
 	zone.array = (char*)malloc( sizeof(char) * zone.width * zone.height);
 	if (zone.array == NULL)
 		return (1);
+	zone_init(&zone);
 	while ((status = fscanf(fd, "%c %f %f %f %f %c\n", &rect.type, &rect.x, &rect.y, &rect.width, &rect.height, &rect.rect_c)) == 6)
 	{
 		if ((rect.type != 'r' && rect.type != 'R') || rect.width <= 0 || rect.height <= 0)
@@ -112,9 +134,9 @@ int main(int argc, char** argv)
 			write(1, "Error: Operation file corrupted\n", 32);
 			return (1);
 		}
-		write_rect(&zone, &rect);
+		put_rect(&zone, &rect);
 	}
-	if (status != -1 && status != 6)
+	if (status != -1)
 	{
 		write(1, "Error: Operation file corrupted\n", 32);
 		return (1);
